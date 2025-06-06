@@ -1,0 +1,13 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Path
+Target = usr/bin/*
+Target = etc/*
+Target = boot/*
+
+[Action]
+Description = Running pkgsentinel to check for sensitive file changes...
+When = PostTransaction
+Exec = /usr/local/bin/pkgsentinel
+

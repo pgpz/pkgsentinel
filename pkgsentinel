@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# pkgsentinel - Suspicious File Alert System for Pacman
+# Monitors sensitive system files and logs warnings if any change after a pacman transaction.
+
+WATCHED_FILES=(
+    "/etc/passwd"
+    "/etc/shadow"
+    "/etc/group"
+    "/etc/sudoers"
+    "/etc/ssh/sshd_config"
+    "/etc/systemd/system"
+    "/etc/pacman.conf"
+    "/boot"
+)
+
+HASH_FILE="/var/lib/pkgsentinel/hashes.txt"
+mkdir -p /var/lib/pkgsentinel
+
+# First run: initialize hashes
+if [ ! -f "$HASH_FILE" ]; then
+    > "$HASH_FILE"
+    for f in "${WATCHED_FILES[@]}"; do
+        if [ -e "$f" ]; then
+            find "$f" -type f 2>/dev/null | while read -r file; do
+                sha256sum "$file" >> "$HASH_FILE"
+            done
+        fi
+    done
+    exit 0
+fi
+
+# Compute current hashes
+TMP_HASHES=$(mktemp)
+> "$TMP_HASHES"
+for f in "${WATCHED_FILES[@]}"; do
+    if [ -e "$f" ]; then
+        find "$f" -type f 2>/dev/null | while read -r file; do
+            sha256sum "$file" >> "$TMP_HASHES"
+        done
+    fi
+done
+
+# Compare hashes
+DIFF=$(comm -3 <(sort "$HASH_FILE") <(sort "$TMP_HASHES"))
+
+if [ -n "$DIFF" ]; then
+    logger -t pkgsentinel "⚠️ Sensitive system file(s) changed after a pacman operation!"
+    logger -t pkgsentinel "Run: sudo journalctl -t pkgsentinel to review changes."
+    logger -t pkgsentinel "--- BEGIN CHANGES ---"
+    echo "$DIFF" | while read -r line; do
+        logger -t pkgsentinel "$line"
+    done
+    logger -t pkgsentinel "--- END CHANGES ---"
+else
+    logger -t pkgsentinel "No sensitive file changes detected after pacman operation."
+fi
+
+# Update stored hashes
+mv "$TMP_HASHES" "$HASH_FILE"
+
