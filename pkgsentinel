@@ -1,6 +1,7 @@
 #!/bin/bash
 
-#
+# feel free to edit this for whatever directory u want to automatically check 
+# this will also autocheck every package u install
 
 WATCHED_FILES=(
     "/etc/passwd"
@@ -11,6 +12,8 @@ WATCHED_FILES=(
     "/etc/systemd/system"
     "/etc/pacman.conf"
     "/boot"
+    "/etc/"
+    "/home/"
 )
 
 HASH_FILE="/var/lib/pkgsentinel/hashes.txt"
