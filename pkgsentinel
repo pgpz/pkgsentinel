@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# pkgsentinel - Suspicious File Alert System for Pacman
-# Monitors sensitive system files and logs warnings if any change after a pacman transaction.
+#
 
 WATCHED_FILES=(
     "/etc/passwd"
@@ -30,7 +29,7 @@ if [ ! -f "$HASH_FILE" ]; then
     exit 0
 fi
 
-# Compute current hashes
+# compute current hashes
 TMP_HASHES=$(mktemp)
 > "$TMP_HASHES"
 for f in "${WATCHED_FILES[@]}"; do
@@ -56,6 +55,6 @@ else
     logger -t pkgsentinel "No sensitive file changes detected after pacman operation."
 fi
 
-# Update stored hashes
+# update stored hashes
 mv "$TMP_HASHES" "$HASH_FILE"
 
